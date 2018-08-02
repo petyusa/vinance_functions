@@ -1,17 +1,15 @@
 import { db } from '../index';
 import * as utils from './util.functions';
-import * as Constants from '../constants';
 import { Timestamp } from '@google-cloud/firestore';
 
 export const add = function(amount: number, date: Timestamp) {
-  const dateString = utils.getDateString(date);
   let dailyRef: FirebaseFirestore.DocumentReference;
 
   return db.runTransaction((transaction) => {
     return utils
-      .createDailyBalanceIfNotExists(dateString)
-      .then(() => {
-        dailyRef = db.collection(Constants.DailyBalance).doc(dateString);
+      .createDailyBalanceIfNotExists(date)
+      .then((ref) => {
+        dailyRef = ref;
       })
       .then(() => {
         return transaction.get(dailyRef).then((daily) => {
@@ -28,9 +26,9 @@ export const substract = function(amount: number, date: Timestamp) {
 
   return db.runTransaction((transaction) => {
     return utils
-      .createDailyBalanceIfNotExists(dateString)
-      .then(() => {
-        dailyRef = db.collection(Constants.DailyBalance).doc(dateString);
+      .createDailyBalanceIfNotExists(date)
+      .then((ref) => {
+        dailyRef = ref;
       })
       .then(() => {
         return transaction.get(dailyRef).then((daily) => {
