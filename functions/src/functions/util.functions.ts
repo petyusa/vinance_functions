@@ -1,13 +1,22 @@
 import { db } from '../index';
 import * as Constants from '../constants';
-import { Timestamp } from '@google-cloud/firestore';
 
-export const createDailyBalanceIfNotExists = function(date: Timestamp) {
+export const getDateString = function(date: any) {
+  if (date instanceof Date) {
+    return new Date(date).toISOString().split('T')[0];
+  }
+  return new Date(date.toDate()).toISOString().split('T')[0];
+};
+
+export const createDailyBalanceIfNotExists = function(
+  date: FirebaseFirestore.Timestamp
+) {
   const dateString = getDateString(date);
-  const dateBefore = new Date(
-    new Date(date.toDate()).getMilliseconds() - 86400000
-  );
+  const dateBefore = new Date(new Date(date.toDate()).getTime() - 86400000);
   const dateBeforeString = getDateString(dateBefore);
+
+  console.log(dateString);
+  console.log(dateBeforeString);
 
   return db
     .collection(Constants.DailyBalance)
@@ -36,13 +45,4 @@ export const createDailyBalanceIfNotExists = function(date: Timestamp) {
       }
       return db.collection(Constants.DailyBalance).doc(dateString);
     });
-};
-
-export const getDateString = function<T>(date: T) {
-  if (date instanceof Timestamp) {
-    return new Date(date.toDate()).toISOString().split('T')[0];
-  } else if (date instanceof Date) {
-    return new Date(date).toISOString().split('T')[0];
-  }
-  return null;
 };

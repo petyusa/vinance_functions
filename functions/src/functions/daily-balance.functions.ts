@@ -21,7 +21,6 @@ export const add = function(amount: number, date: Timestamp) {
 };
 
 export const substract = function(amount: number, date: Timestamp) {
-  const dateString = utils.getDateString(date);
   let dailyRef: FirebaseFirestore.DocumentReference;
 
   return db.runTransaction((transaction) => {
