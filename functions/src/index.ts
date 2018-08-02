@@ -5,6 +5,7 @@ admin.initializeApp(functions.config().firebase);
 export const db = admin.firestore();
 
 import * as Constants from './constants';
+import { Income, Cost, Transfer } from './models';
 
 import * as dailyBalanceFunctions from './functions/daily-balance.functions';
 import * as costCategoryFunctions from './functions/cost-category.functions';
@@ -13,39 +14,39 @@ import * as accountFunctions from './functions/account-balance.functions';
 export const onAddIncome = functions.firestore
   .document(Constants.IncomeDoc)
   .onCreate((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.add(data.toId, data.amount).then(() => {
-      return dailyBalanceFunctions.add(data.amount, data.date);
+    const income = snap.data() as Income;
+    return accountFunctions.add(income.toId, income.amount).then(() => {
+      return dailyBalanceFunctions.add(income.amount, income.date);
     });
   });
 
 export const onDeleteIncome = functions.firestore
   .document(Constants.IncomeDoc)
   .onDelete((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.substract(data.toId, data.amount).then(() => {
-      return dailyBalanceFunctions.substract(data.amount, data.date);
+    const income = snap.data() as Income;
+    return accountFunctions.substract(income.toId, income.amount).then(() => {
+      return dailyBalanceFunctions.substract(income.amount, income.date);
     });
   });
 
 export const onEditIncome = functions.firestore
   .document(Constants.IncomeDoc)
   .onUpdate((snap, context) => {
-    const dataBefore = snap.before.data();
-    const dataAfter = snap.after.data();
+    const originalIncome = snap.before.data() as Income;
+    const newIncome = snap.after.data() as Income;
 
     return accountFunctions
-      .substract(dataBefore.toId, dataBefore.amount)
+      .substract(originalIncome.toId, originalIncome.amount)
       .then(() => {
         return dailyBalanceFunctions
-          .substract(dataBefore.amount, dataBefore.date)
+          .substract(originalIncome.amount, originalIncome.date)
           .then(() => {
             return accountFunctions
-              .add(dataAfter.toId, dataAfter.amount)
+              .add(newIncome.toId, newIncome.amount)
               .then(() => {
                 return dailyBalanceFunctions.add(
-                  dataAfter.amount,
-                  dataAfter.date
+                  newIncome.amount,
+                  newIncome.date
                 );
               });
           });
@@ -55,25 +56,25 @@ export const onEditIncome = functions.firestore
 export const onAddCost = functions.firestore
   .document(Constants.CostDoc)
   .onCreate((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.substract(data.fromId, data.amount).then(() => {
+    const cost = snap.data() as Cost;
+    return accountFunctions.substract(cost.fromId, cost.amount).then(() => {
       return costCategoryFunctions
-        .add(data.categoryId, data.amount)
+        .add(cost.categoryId, cost.amount)
         .then(() => {
-          return dailyBalanceFunctions.substract(data.amount, data.date);
+          return dailyBalanceFunctions.substract(cost.amount, cost.date);
         });
     });
   });
 
 export const onDeleteCost = functions.firestore
   .document(Constants.CostDoc)
-  .onCreate((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.add(data.fromId, data.amount).then(() => {
+  .onDelete((snap, context) => {
+    const cost = snap.data() as Cost;
+    return accountFunctions.add(cost.fromId, cost.amount).then(() => {
       return costCategoryFunctions
-        .substract(data.categoryId, data.amount)
+        .substract(cost.categoryId, cost.amount)
         .then(() => {
-          return dailyBalanceFunctions.add(data.amount, data.date);
+          return dailyBalanceFunctions.add(cost.amount, cost.date);
         });
     });
   });
@@ -81,27 +82,27 @@ export const onDeleteCost = functions.firestore
 export const onEditCost = functions.firestore
   .document(Constants.CostDoc)
   .onUpdate((snap, context) => {
-    const dataBefore = snap.before.data();
-    const dataAfter = snap.after.data();
+    const originalCost = snap.before.data() as Cost;
+    const newCost = snap.after.data() as Cost;
 
     return accountFunctions
-      .add(dataBefore.fromId, dataBefore.amount)
+      .add(originalCost.fromId, originalCost.amount)
       .then(() => {
         return costCategoryFunctions
-          .substract(dataBefore.categoryId, dataBefore.amount)
+          .substract(originalCost.categoryId, originalCost.amount)
           .then(() => {
             return dailyBalanceFunctions
-              .add(dataBefore.amount, dataBefore.date)
+              .add(originalCost.amount, originalCost.date)
               .then(() => {
                 return accountFunctions
-                  .substract(dataAfter.fromId, dataAfter.amount)
+                  .substract(newCost.fromId, newCost.amount)
                   .then(() => {
                     return costCategoryFunctions
-                      .add(dataAfter.categoryId, dataAfter.amount)
+                      .add(newCost.categoryId, newCost.amount)
                       .then(() => {
                         return dailyBalanceFunctions.substract(
-                          dataAfter.amount,
-                          dataAfter.date
+                          newCost.amount,
+                          newCost.date
                         );
                       });
                   });
@@ -113,37 +114,42 @@ export const onEditCost = functions.firestore
 export const onAddTransfer = functions.firestore
   .document(Constants.TransferDoc)
   .onCreate((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.substract(data.fromId, data.amount).then(() => {
-      return accountFunctions.add(data.toId, data.amount0);
-    });
+    const transfer = snap.data() as Transfer;
+    return accountFunctions
+      .substract(transfer.fromId, transfer.amount)
+      .then(() => {
+        return accountFunctions.add(transfer.toId, transfer.amount);
+      });
   });
 
 export const onDeleteTransfer = functions.firestore
   .document(Constants.TransferDoc)
   .onDelete((snap, context) => {
-    const data = snap.data();
-    return accountFunctions.add(data.fromId, data.amount).then(() => {
-      return accountFunctions.substract(data.toId, data.amount);
+    const transfer = snap.data() as Transfer;
+    return accountFunctions.add(transfer.fromId, transfer.amount).then(() => {
+      return accountFunctions.substract(transfer.toId, transfer.amount);
     });
   });
 
 export const onEditTransfer = functions.firestore
   .document(Constants.TransferDoc)
   .onUpdate((snap, context) => {
-    const dataBefore = snap.before.data();
-    const dataAfter = snap.after.data();
+    const originalTransfer = snap.before.data() as Transfer;
+    const newTransfer = snap.after.data() as Transfer;
 
     return accountFunctions
-      .add(dataBefore.fromId, dataBefore.amount)
+      .add(originalTransfer.fromId, originalTransfer.amount)
       .then(() => {
         return accountFunctions
-          .substract(dataBefore.toId, dataBefore.amount)
+          .substract(originalTransfer.toId, originalTransfer.amount)
           .then(() => {
             return accountFunctions
-              .substract(dataAfter.fromId, dataAfter.amount)
+              .substract(newTransfer.fromId, newTransfer.amount)
               .then(() => {
-                return accountFunctions.add(dataAfter.toId, dataAfter.amount);
+                return accountFunctions.add(
+                  newTransfer.toId,
+                  newTransfer.amount
+                );
               });
           });
       });

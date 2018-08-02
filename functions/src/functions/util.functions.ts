@@ -9,13 +9,15 @@ export const createDailyBalanceIfNotExists = function(today: string) {
     .get()
     .then((doc) => {
       if (!doc.exists) {
-        db.collection(Constants.DailyBalance)
+        return db
+          .collection(Constants.DailyBalance)
           .doc(today)
           .set({
             balance: 0,
             date: new Date()
           });
       }
+      return null;
     });
 };
 
