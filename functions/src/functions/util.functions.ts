@@ -1,48 +1,40 @@
 import { db } from '../index';
 import * as Constants from '../constants';
 
-export const getDateString = function(date: any) {
+export const getDateString = function(date) {
   if (date instanceof Date) {
     return new Date(date).toISOString().split('T')[0];
   }
   return new Date(date.toDate()).toISOString().split('T')[0];
 };
 
-export const createDailyBalanceIfNotExists = function(
-  date: FirebaseFirestore.Timestamp
-) {
+export const getOrCreateDailyValue = function(date) {
   const dateString = getDateString(date);
-  const dateBefore = new Date(new Date(date.toDate()).getTime() - 86400000);
+  const dateBefore = new Date(date.toDate().getTime() - 86400000);
   const dateBeforeString = getDateString(dateBefore);
 
-  console.log(dateString);
-  console.log(dateBeforeString);
-
   return db
-    .collection(Constants.DailyBalance)
+    .collection(Constants.DailyValues)
     .doc(dateString)
     .get()
     .then((doc) => {
       if (!doc.exists) {
-        db.collection(Constants.DailyBalance)
+        db.collection(Constants.DailyValues)
           .doc(dateBeforeString)
           .get()
           .then((before) => {
-            return before.data().amount;
-          })
-          .then((balanceBefore) => {
             return db
-              .collection(Constants.DailyBalance)
+              .collection(Constants.DailyValues)
               .doc(dateString)
               .set({
-                balance: balanceBefore,
-                date: new Date()
+                balance: before.data().balance,
+                date: new Date(dateString)
               })
               .then(() => {
-                return db.collection(Constants.DailyBalance).doc(dateString);
+                return db.collection(Constants.DailyValues).doc(dateString);
               });
           });
       }
-      return db.collection(Constants.DailyBalance).doc(dateString);
+      return db.collection(Constants.DailyValues).doc(dateString);
     });
 };

@@ -7,7 +7,7 @@ export const add = function(amount: number, date: Timestamp) {
 
   return db.runTransaction((transaction) => {
     return utils
-      .createDailyBalanceIfNotExists(date)
+      .getOrCreateDailyValue(date)
       .then((ref) => {
         dailyRef = ref;
       })
@@ -21,19 +21,12 @@ export const add = function(amount: number, date: Timestamp) {
 };
 
 export const substract = function(amount: number, date: Timestamp) {
-  let dailyRef: FirebaseFirestore.DocumentReference;
-
   return db.runTransaction((transaction) => {
-    return utils
-      .createDailyBalanceIfNotExists(date)
-      .then((ref) => {
-        dailyRef = ref;
-      })
-      .then(() => {
-        return transaction.get(dailyRef).then((daily) => {
-          const newBalance = daily.data().balance - amount;
-          return transaction.update(dailyRef, { balance: newBalance });
-        });
+    return utils.getOrCreateDailyValue(date).then((dailyRef) => {
+      return transaction.get(dailyRef).then((daily) => {
+        const newBalance = daily.data().balance - amount;
+        return transaction.update(dailyRef, { balance: newBalance });
       });
+    });
   });
 };
