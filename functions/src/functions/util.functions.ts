@@ -2,10 +2,29 @@ import { db } from '../index';
 import * as Constants from '../constants';
 
 export const getDateString = function(date) {
-  if (date instanceof Date) {
-    return new Date(date).toISOString().split('T')[0];
+  if (!(date instanceof Date)) {
+    date = new Date(date.toDate());
   }
-  return new Date(date.toDate()).toISOString().split('T')[0];
+  return new Date(date).toISOString().split('T')[0];
+};
+
+export const getMonth = function(date, isPrevious) {
+  if (!(date instanceof Date)) {
+    date = new Date(date.toDate());
+  }
+
+  let monthNumber;
+  if (isPrevious) {
+    monthNumber = date.getMonth();
+  } else {
+    monthNumber = date.getMonth() + 1;
+  }
+
+  const month = monthNumber < 10 ? `0${monthNumber}` : `${monthNumber}`;
+
+  const year = date.getFullYear();
+
+  return [year, month].join('-');
 };
 
 export const getOrCreateDailyValue = function(date) {
